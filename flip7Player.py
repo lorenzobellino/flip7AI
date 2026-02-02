@@ -1,8 +1,12 @@
 from flip7.objectsV2 import Player
 class ProbabilisticAgent(Player):
-    def __init__(self, name="Agent"):
+    def __init__(self, treshold = 0.03, name="Agent"):
         super().__init__()
         self.name = name
+        self.treshold = treshold  # Base treshold for bust probability
+
+    def __repr__(self):
+        return f"{self.name}"
 
     def get_remaining_deck_composition(self, game):
         """
@@ -39,8 +43,11 @@ class ProbabilisticAgent(Player):
         # 3. Aggression Logic
         # If we have a second chance, we can be much riskier (risk up to 80%)
         # If not, we stay safe (stay if risk > 25%)
-        threshold = 0.80 if self.second_chance else 0.25
-        
+        # threshold = 0.80 if self.second_chance else 0.25
+
+        threshold = self.treshold if not self.second_chance else self.treshold * 4
+
+
         # 4. Contextual adjustment: If an opponent is about to win the game (300 pts)
         # we might need to take bigger risks.
         leader_score = max(p.total_score for p in game.players)

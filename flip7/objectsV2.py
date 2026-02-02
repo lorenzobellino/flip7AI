@@ -61,14 +61,16 @@ class Player(ABC): # Inherit from ABC for proper abstract classes
         # base points
         score = sum(card.value for card in self.hand if not card.is_bonus)
         
-        # bonuses
-        for card in self.hand:
-            if card.is_bonus and "+" in card.bonus_value:
-                score += int(card.bonus_value.replace("+", ""))
+       
         
         # X2 bonus
         if any(card.bonus_value == "x2" for card in self.hand):
             score *= 2
+
+        # bonuses
+        for card in self.hand:
+            if card.is_bonus and "+" in card.bonus_value:
+                score += int(card.bonus_value.replace("+", ""))
         
         # Flip 7
         value_cards = [c for c in self.hand if not c.is_bonus or c.bonus_value == "0"]
@@ -83,6 +85,8 @@ class Flip7Game(object):
         self.deck = self.create_deck()
         self.infinite_deck = infinite_deck
         self.player_cores = {player: player.count_score() for player in players}
+
+    
 
     def create_deck(self):
         deck = []
@@ -165,6 +169,13 @@ class Flip7Game(object):
                         for p in self.players:
                             p.still_in_round = False
                 
+            # print scores at end of round as a table (plus hands)
+            print("End of Round Scores:")
+            for p in self.players:
+                hand_repr = ', '.join(str(card) for card in p.hand)
+                print(f"{p.name}: Round Score = {p.count_score()}, Total Score = {p.total_score}, Hand = [{hand_repr}]")
+            print("-" * 40)
+            
             
             # End of Round cleanup
             for p in self.players:
@@ -172,6 +183,12 @@ class Flip7Game(object):
                 p.hand = []
                 p.still_in_round = True
                 p.second_chance = False # Reset for next round
+                p.flip7 = False
+
+            # recreate deck for next round
+            self.deck = self.create_deck()
+
+
 
 
     # def run(self):

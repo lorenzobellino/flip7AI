@@ -5,7 +5,7 @@ from flip7.objectsV2 import Flip7Game
 from flip7Player import ProbabilisticAgent
 
 if __name__ == "__main__":
-    players = [ProbabilisticAgent("AI_Player_1"), ProbabilisticAgent("AI_Player_2")]
+    players = [ProbabilisticAgent(treshold=0.5, name="AI_Player_1"), ProbabilisticAgent(treshold=0.15,name="AI_Player_2")]
     game = Flip7Game(players, infinite_deck=True)
     game.run()
     for player in players:
