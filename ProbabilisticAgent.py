@@ -1,4 +1,4 @@
-from flip7.objectsV2 import Player
+from flip7.objects import Player
 class ProbabilisticAgent(Player):
     def __init__(self, treshold = 0.03, name="Agent"):
         super().__init__()
