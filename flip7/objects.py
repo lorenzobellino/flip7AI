@@ -1,54 +1,11 @@
-
 import numpy as np
-from abc import abstractmethod
-import copy
-
-
-class Player(object):
-    def __init__(self, game):
-        self.game = game
-        self.hand = []
-        self.still_in_round = True
-        self.score = 0
-
-    @abstractmethod
-    def ask_card(self, game) -> bool:
-        pass
-
-    @abstractmethod
-    def busted(self) -> bool:
-        pass
-
-    def count_score(self) -> int:
-        score = 0
-        value_cards = [cards for cards in self.hand[self] if not cards.is_bonus]
-        for card in value_cards:
-            score += card.get_value()
-        
-        times2 = any(card.bonus_value == "x2" for card in self.hand[self])
-        if times2:
-            score *= 2
-        
-        # Additional bonus cards can be handled here
-        bonuses = [card.bonus_value for card in self.hand[self] if card.is_bonus and card.bonus_value != "x2"]
-        for bonus in bonuses:
-            bonus_value = int(bonus.replace("+", ""))
-            score += bonus_value
-
-        # flip7 rule
-        if len(value_cards) == 7:
-            score += 15
-
-        return score
-
-    def get_game(self):
-        return self.game
-
+from abc import ABC, abstractmethod
+import random
 
 class Card(object):
     def __init__(self, value):
-        if(isinstance(value, int)):
-            self.value = int(value)
+        if isinstance(value, int):
+            self.value = value
             self.bonus_value = ""
             self.is_bonus = False
         else:
@@ -56,50 +13,233 @@ class Card(object):
             self.bonus_value = value
             self.is_bonus = True
 
-    def get_value(self) -> int:
-        return self.value
+    def __repr__(self):
+        return str(self.value) if not self.is_bonus else self.bonus_value
 
+class Player(ABC): # Inherit from ABC for proper abstract classes
+    def __init__(self):
+        self.hand = []
+        self.still_in_round = True
+        self.score = 0
+        self.total_score = 0
+        self.second_chance = False
+        self.flip7 = False
+        # self.__flip7Game = flip7Game
+
+    @abstractmethod
+    def ask_card(self, game) -> bool:
+        pass
+
+
+    def choose_to_freeze(self, players):
+        """Choose the most threatening player to flip 3 cards"""
+        potential_targets = [p for p in players if p != self and p.still_in_round]
+        if not potential_targets:
+            return self # No one to freeze
+        
+        # For now, just choose the player with the highest total score
+        return max(potential_targets, key=lambda p: p.total_score)
+
+    def choose_to_flip3(self, players):
+        """Choose the most threatening player to flip 3 cards"""
+        potential_targets = [p for p in players if p != self and p.still_in_round]
+        if not potential_targets:
+            return self # No one to freeze
+        
+        # For now, just choose the player with the highest total score
+        return max(potential_targets, key=lambda p: p.total_score)
+
+    def busted(self) -> bool:
+        value_cards = [card for card in self.hand if not card.is_bonus]
+        card_set = set(card.value for card in value_cards)
+        if(len(card_set) != len(value_cards)):
+            if self.second_chance == False:
+                return True
+            else:
+                # remove duplicates keeping one of each
+                unique_values = set()
+                new_hand = []
+                for card in self.hand:
+                    if not card.is_bonus:
+                        if card.value not in unique_values:
+                            unique_values.add(card.value)
+                            new_hand.append(card)
+                    else:
+                        new_hand.append(card)
+                self.hand = new_hand
+                self.second_chance = False
+        return False
+
+    def reset(self):
+        self.hand = []
+        self.still_in_round = True
+        self.second_chance = False
+        self.flip7 = False
+        self.score = 0
+        self.total_score = 0
+        
+        
+    def count_score(self) -> int:
+        if not self.hand: return 0
+        
+        # if no values cards, score is 0
+        if all(card.is_bonus for card in self.hand):
+            return 0
+        
+        # base points
+        score = sum(card.value for card in self.hand if not card.is_bonus)
+        
+       
+        
+        # X2 bonus
+        if any(card.bonus_value == "x2" for card in self.hand):
+            score *= 2
+
+        # bonuses
+        for card in self.hand:
+            if card.is_bonus and "+" in card.bonus_value:
+                score += int(card.bonus_value.replace("+", ""))
+        
+        # Flip 7
+        value_cards = [c for c in self.hand if not c.is_bonus or c.bonus_value == "0"]
+        if len(value_cards) >= 7:
+            score += 15
+
+        return score
 
 class Flip7Game(object):
     def __init__(self, players, infinite_deck=False):
         self.players = players
-        self.hands = {player: [] for player in players}
         self.deck = self.create_deck()
-        np.random.shuffle(self.deck)
         self.infinite_deck = infinite_deck
-            
+        self.player_cores = {player: player.count_score() for player in players}
+        self.rounds = {player: [] for player in players}
+        np.random.seed(42)
+        random.seed(42)
 
     def create_deck(self):
         deck = []
-        # one 0, one 1, two 2, three 3, ..., nine 9,... twelve 12
         for i in range(0, 13):
             for _ in range(i + 1):
                 deck.append(Card(i))
-        # Adding bonus cards
-        bonus_cards = ["+2", "+4", "+6", "+8", "+10","x2", "Second Chance", "Second Chance", "Second Chance", "Flip 3", "Flip 3", "Flip 3", "Freeze", "Freeze", "Freeze"]
+        
+        bonus_cards = ["+2", "+4", "+6", "+8", "+10", "x2", 
+                       "Second Chance", "Second Chance", "Second Chance", 
+                       "Flip 3", "Flip 3", "Flip 3", 
+                       "Freeze", "Freeze", "Freeze"]
         for bonus in bonus_cards:
             deck.append(Card(bonus))
-        return np.random.shuffle(deck)
+        
+        np.random.shuffle(deck)
+        return deck
 
-    def get_hands(self):
-        return self.hands
+    def resolve_draw(self, player, target_player=None):
+        """
+        Handles drawing a card and all side effects.
+        target_player is used specifically for the 'Flip 3' effect.
+        """
+        if not self.deck:
+            return
+
+        card = self.deck.pop()
+        
+        
+
+        # Infinite deck logic
+        if self.infinite_deck:
+            self.deck.append(card)
+            np.random.shuffle(self.deck)
+
+        # 1. Determine who is actually affected by this card
+        # Usually the player drawing, unless it's a Flip 3 resolution
+        receiver = target_player if target_player else player
+
+        # print(f"{receiver.name} drew {card}. Hand before: {receiver.hand}")
+
+        # 2. Process Card Effects
+        if not card.is_bonus:
+            receiver.hand.append(card)
+        
+        elif card.bonus_value == "Second Chance":
+            receiver.second_chance = True
+            
+        elif card.bonus_value == "Freeze":
+            # The player who DREW the card chooses who to freeze
+            victim = player.choose_to_freeze(self.players)
+            victim.still_in_round = False # Simply ends their round
+            
+        elif card.bonus_value == "Flip 3":
+            # The player who DREW the card chooses who must flip 3
+            victim = player.choose_to_flip3(self.players)
+            for _ in range(3):
+                if victim.still_in_round: # Stop if they bust mid-flip
+                    self.resolve_draw(player, target_player=victim)
+        
+        elif "+" in card.bonus_value or card.bonus_value == "x2":
+            receiver.hand.append(card)
+
+        # 3. Check for Bust (This happens after any card is added to a hand)
+        if receiver.busted():
+            receiver.still_in_round = False
+            # receiver.hand = []
+
+        # 4. Check for Flip 7 condition
+        value_cards = [c for c in receiver.hand if not c.is_bonus]
+        if len(value_cards) >= 7:
+            receiver.flip7 = True
 
     def run(self):
-        while any(player.still_in_round for player in self.players):
-            for player in self.players:
-                if player.still_in_round:
-                    if player.ask_card(self):
-                        card = self.deck.pop()
-                        if(self.infinite_deck):
-                            self.deck.append(card)
-                            np.random.shuffle(self.deck)
-                        player.hand.append(card)
-                        if(player.busted()):
+        while all(p.total_score < 300 for p in self.players): # Game ends when someone hits 300
+            while any(p.still_in_round for p in self.players):
+                for player in self.players:
+                    if player.still_in_round:
+                        if player.ask_card(self):
+                            self.resolve_draw(player)
+                            # print(f"{player.name} drew a card. Hand: {player.hand} - Score: {player.count_score()} - Total: {player.total_score} - Busted: {player.busted()}")
+                        else:
                             player.still_in_round = False
-                            player.hand = []
-                            player.score = 0
-                    else:
-                        player.still_in_round = False
+                            # print(f"{player.name} decided to stop asking for cards. Hand: {player.hand} - Score: {player.count_score()} - Total: {player.total_score}")
+                    if (player.flip7):
+                        # Immediate end of round for all players
+                        for p in self.players:
+                            p.still_in_round = False
+                
+            # print scores at end of round as a table (plus hands)
+            # print("End of Round Scores:")
+            # for p in self.players:
+            #     hand_repr = ', '.join(str(card) for card in p.hand)
+            #     print(f"{p.name}: Round Score = {p.count_score()}, Total Score = {p.total_score}, Hand = [{hand_repr}]")
+            #     self.rounds[p].append({"score": p.count_score(), "hand": hand_repr})
+            # print("-" * 40)
+            # input()
+            
+            
+            
+            # End of Round cleanup
+            for p in self.players:
+                p.total_score += p.count_score()
+                p.hand = []
+                p.still_in_round = True
+                p.second_chance = False # Reset for next round
+                p.flip7 = False
 
-        scores = {player: player.count_score() for player in self.players} 
-        return scores 
+            # recreate deck for next round
+            self.deck = self.create_deck()
+
+    def reset(self):
+        self.deck = self.create_deck()
+        self.rounds = {player: [] for player in self.players}
+        for player in self.players:
+            player.reset()
+    
+    def set_players(self, players):
+        self.players = players
+
+    def __repr__(self):
+        repr_str = "Game Rounds Summary:\n"
+        for player, rounds in self.rounds.items():
+            repr_str += f"{player.name} ({player.total_score}):\n"
+            for i, round_info in enumerate(rounds, 1):
+                repr_str += f"  Round {i}: Score = {round_info['score']}, Hand = [{round_info['hand']}]\n"
+        return repr_str
+   
