@@ -1,10 +1,11 @@
 from flip7.objects import Player
 
 class ProbabilisticAgent(Player):
-    def __init__(self, treshold = 0.03, name="Agent"):
+    def __init__(self, treshold = 0.03, name="Agent", verbose = False):
         super().__init__()
         self.name = name
         self.treshold = treshold  # Base treshold for bust probability
+        self.verbose = verbose
 
     def __repr__(self):
         return f"{self.name}"
@@ -58,6 +59,12 @@ class ProbabilisticAgent(Player):
         if leader_score > 250 and self.total_score < leader_score:
             treshold += 0.15 
 
+        res = bust_prob < treshold
+        if self.verbose:
+            if res:
+                print(f"{self.name}{'*' if self.second_chance else ''} chose to ask for another card.")
+            else:
+                print(f"{self.name}{'*' if self.second_chance else ''} chose to stop asking for cards.")
         return bust_prob < treshold
 
     # def choose_to_freeze(self, players):

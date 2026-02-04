@@ -2,10 +2,11 @@ import random
 from flip7.objects import Player
 
 class GAAgent(Player):
-    def __init__(self, genome, name="GAAgent"):
+    def __init__(self, genome, name="GAAgent", verbose = False):
         super().__init__()
         self.name = name
         self.set_genome(genome)
+        self.verbose = verbose
 
     def __repr__(self):
         return f"{self.name}"
@@ -37,21 +38,11 @@ class GAAgent(Player):
         
         if self.second_chance:
             return True
-
         data = self.cook_game_state(game)
-
 
         result = data["hand_score"] * self.genome["alpha"] + self.genome["beta"] * data["value_cards"]
 
-
-
-        # print(f"Decision : {result} | Hand Score: {data['hand_score']} (Alpha: {self.genome['alpha']}) | Value Cards: {data['value_cards']} (Beta: {self.genome['beta']})")
-        # print(f"{data['hand_score']} > {self.genome['alpha']} and {data['value_cards']} < {self.genome['beta']}")
-        # input()
         return result > 0
-
-
-        # return score_treshold > self.genome["ask_treshold"]
 
 
     

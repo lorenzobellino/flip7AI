@@ -2,10 +2,11 @@
 from flip7.objects import Player
 
 class PointTresholdAgent(Player):
-    def __init__(self, treshold, name="Dumb_Agent"):
+    def __init__(self, treshold, name="PointTreshold_Agent", verbose = False):
         super().__init__() 
         self.name = name
         self.treshold = treshold
+        self.verbose = verbose
 
     def ask_card(self, game) -> bool:
         if self.second_chance:

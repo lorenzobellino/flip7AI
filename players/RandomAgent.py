@@ -2,9 +2,10 @@ from flip7.objects import Player
 import random
 
 class RandomAgent(Player):
-    def __init__(self, name="RandomAgent"):
+    def __init__(self, name="RandomAgent", verbose = False):
         super().__init__()
         self.name = name
+        self.verbose = verbose
 
     def __repr__(self):
         return f"{self.name}"

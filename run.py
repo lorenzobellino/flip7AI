@@ -2,15 +2,13 @@
 
 # run a game between two probabilistic players
 from flip7.objects import Flip7Game
-from players import ProbabilisticAgent, RandomAgent, PointTresholdAgent, PointCardTresholdAgent, GAAgent
+from players import ProbabilisticAgent, RandomAgent, PointTresholdAgent, PointCardTresholdAgent, GAAgent, YesManAgent
 
 def run_tournament():
      # players = [
     #     ProbabilisticAgent(treshold=0.995, name="AI_Player_1"), 
     #     ProbabilisticAgent(treshold=0.95,name="AI_Player_2"),
     #     RandomAgent(name="Random_Player")]
-
-    run_tournament()
 
     genome = {'alpha': -80.63788249552616, 'beta': -104.51884131879049, 'ask_treshold': 0.9387703410190069}
     players = [
@@ -39,8 +37,8 @@ def run_tournament():
         # input()
         wins[winner] += 1
         # reset players for next game
-        print(game)
-        input()
+        # print(game)
+        # input()
         game.reset()
     # print results
     for player_name, win_count in wins.items():
@@ -67,22 +65,39 @@ def run_tournament():
 
 
 def run_single():
-    # genome = {'alpha': 28, 'beta': 4, 'ask_treshold': 0.9387703410190069}
-    genome = {'alpha': -3.1616193485730593, 'beta': 69.83038018737267, 'ask_treshold': 0.10172886631406974}
+    # genome = {'alpha': -3.1616193485730593, 'beta': 69.83038018737267, 'ask_treshold': 0.10172886631406974}
+    # players = [
+    #     GAAgent(genome=genome, name="My_GA_Agent"),
+    #     ProbabilisticAgent(treshold=0.19,name="Prob_AI19"),
+    # ]
+
     players = [
-        GAAgent(genome=genome, name="My_GA_Agent"),
-        ProbabilisticAgent(treshold=0.19,name="Prob_AI19"),
+        ProbabilisticAgent(treshold=0.19,name="Prob_AI19",  verbose=True),
+        PointCardTresholdAgent(card_treshold=4, point_treshold=25, name="PointCard_AI", verbose=True),
+        YesManAgent(name="YesMan_AI", verbose=True),
+    ]
+    game = Flip7Game(players, infinite_deck=False)
+    game.run()
+    print(game)
+
+def run_single_human():
+    from players.HumanAgent import HumanPlayer
+
+    players = [
+        HumanPlayer(name="Human_Player", verbose=True),
+        ProbabilisticAgent(treshold=0.19,name="Prob_AI19",  verbose=True),
     ]
     
     game = Flip7Game(players, infinite_deck=True)
     game.run()
     print(game)
 
-
 if __name__ == "__main__":
 
     # run_tournament()
-    run_single()
+    run_single() 
+
+    # run_single_human()
 
     
 
