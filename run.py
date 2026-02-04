@@ -1,25 +1,44 @@
-
-
 # run a game between two probabilistic players
 from flip7.objects import Flip7Game
+<<<<<<< HEAD
 from players import ProbabilisticAgent, RandomAgent, PointTresholdAgent, PointCardTresholdAgent, GAAgent, YesManAgent
+=======
+from players import (
+    ProbabilisticAgent,
+    RandomAgent,
+    PointTresholdAgent,
+    PointCardTresholdAgent,
+    GAAgent,
+)
+
+>>>>>>> 74e50efa93b34d9c0d66af9a57ee4b9131b41d19
 
 def run_tournament():
-     # players = [
-    #     ProbabilisticAgent(treshold=0.995, name="AI_Player_1"), 
+    # players = [
+    #     ProbabilisticAgent(treshold=0.995, name="AI_Player_1"),
     #     ProbabilisticAgent(treshold=0.95,name="AI_Player_2"),
     #     RandomAgent(name="Random_Player")]
 
+<<<<<<< HEAD
     genome = {'alpha': -80.63788249552616, 'beta': -104.51884131879049, 'ask_treshold': 0.9387703410190069}
+=======
+    run_tournament()
+
+    genome = {
+        "alpha": -80.63788249552616,
+        "beta": -104.51884131879049,
+        "ask_treshold": 0.9387703410190069,
+    }
+>>>>>>> 74e50efa93b34d9c0d66af9a57ee4b9131b41d19
     players = [
         # RandomAgent(name="Random_Player_1"),
         # PointTresholdAgent(treshold=20, name="Dumb_Player_20"),
         # PointTresholdAgent(treshold=30, name="Dumb_Player_30"),
         # ProbabilisticAgent(treshold=0.25,name="Prob_AI25"),
         GAAgent(genome=genome, name="My_GA_Agent"),
-        ProbabilisticAgent(treshold=0.19,name="Prob_AI19"),
+        ProbabilisticAgent(treshold=0.19, name="Prob_AI19"),
     ]
-    
+
     # run 1000 games and track wins
     wins = {player.name: 0 for player in players}
     num_games = 1000
@@ -42,7 +61,9 @@ def run_tournament():
         game.reset()
     # print results
     for player_name, win_count in wins.items():
-        print(f"{player_name} won {win_count} out of {num_games} games ({(win_count/num_games)*100:.2f}%)")
+        print(
+            f"{player_name} won {win_count} out of {num_games} games ({(win_count/num_games)*100:.2f}%)"
+        )
 
     # run 1000 games and track wins (no infinite deck)
     wins = {player.name: 0 for player in players}
@@ -61,10 +82,13 @@ def run_tournament():
         game.reset()
     # print results
     for player_name, win_count in wins.items():
-        print(f"{player_name} won {win_count} out of {num_games} games ({(win_count/num_games)*100:.2f}%)")
+        print(
+            f"{player_name} won {win_count} out of {num_games} games ({(win_count/num_games)*100:.2f}%)"
+        )
 
 
 def run_single():
+<<<<<<< HEAD
     # genome = {'alpha': -3.1616193485730593, 'beta': 69.83038018737267, 'ask_treshold': 0.10172886631406974}
     # players = [
     #     GAAgent(genome=genome, name="My_GA_Agent"),
@@ -86,8 +110,19 @@ def run_single_human():
     players = [
         HumanPlayer(name="Human_Player", verbose=True),
         ProbabilisticAgent(treshold=0.19,name="Prob_AI19",  verbose=True),
+=======
+    # genome = {'alpha': 28, 'beta': 4, 'ask_treshold': 0.9387703410190069}
+    genome = {
+        "alpha": -3.1616193485730593,
+        "beta": 69.83038018737267,
+        "ask_treshold": 0.10172886631406974,
+    }
+    players = [
+        GAAgent(genome=genome, name="My_GA_Agent"),
+        ProbabilisticAgent(treshold=0.19, name="Prob_AI19"),
+>>>>>>> 74e50efa93b34d9c0d66af9a57ee4b9131b41d19
     ]
-    
+
     game = Flip7Game(players, infinite_deck=True)
     game.run()
     print(game)
@@ -99,5 +134,7 @@ if __name__ == "__main__":
 
     # run_single_human()
 
-    
-
+    print("\nAverage scores after 1000 games (no infinite deck):")
+    for player_name, total_score in score_sums.items():
+        average_score = total_score / num_games
+        print(f"{player_name} average score: {average_score:.2f}")
