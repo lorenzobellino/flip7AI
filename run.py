@@ -1,8 +1,6 @@
 # run a game between two probabilistic players
 from flip7.objects import Flip7Game
-<<<<<<< HEAD
 from players import ProbabilisticAgent, RandomAgent, PointTresholdAgent, PointCardTresholdAgent, GAAgent, YesManAgent
-=======
 from players import (
     ProbabilisticAgent,
     RandomAgent,
@@ -11,7 +9,6 @@ from players import (
     GAAgent,
 )
 
->>>>>>> 74e50efa93b34d9c0d66af9a57ee4b9131b41d19
 
 def run_tournament():
     # players = [
@@ -19,9 +16,7 @@ def run_tournament():
     #     ProbabilisticAgent(treshold=0.95,name="AI_Player_2"),
     #     RandomAgent(name="Random_Player")]
 
-<<<<<<< HEAD
     genome = {'alpha': -80.63788249552616, 'beta': -104.51884131879049, 'ask_treshold': 0.9387703410190069}
-=======
     run_tournament()
 
     genome = {
@@ -29,7 +24,6 @@ def run_tournament():
         "beta": -104.51884131879049,
         "ask_treshold": 0.9387703410190069,
     }
->>>>>>> 74e50efa93b34d9c0d66af9a57ee4b9131b41d19
     players = [
         # RandomAgent(name="Random_Player_1"),
         # PointTresholdAgent(treshold=20, name="Dumb_Player_20"),
@@ -88,13 +82,6 @@ def run_tournament():
 
 
 def run_single():
-<<<<<<< HEAD
-    # genome = {'alpha': -3.1616193485730593, 'beta': 69.83038018737267, 'ask_treshold': 0.10172886631406974}
-    # players = [
-    #     GAAgent(genome=genome, name="My_GA_Agent"),
-    #     ProbabilisticAgent(treshold=0.19,name="Prob_AI19"),
-    # ]
-
     players = [
         ProbabilisticAgent(treshold=0.19,name="Prob_AI19",  verbose=True),
         PointCardTresholdAgent(card_treshold=4, point_treshold=25, name="PointCard_AI", verbose=True),
@@ -110,17 +97,6 @@ def run_single_human():
     players = [
         HumanPlayer(name="Human_Player", verbose=True),
         ProbabilisticAgent(treshold=0.19,name="Prob_AI19",  verbose=True),
-=======
-    # genome = {'alpha': 28, 'beta': 4, 'ask_treshold': 0.9387703410190069}
-    genome = {
-        "alpha": -3.1616193485730593,
-        "beta": 69.83038018737267,
-        "ask_treshold": 0.10172886631406974,
-    }
-    players = [
-        GAAgent(genome=genome, name="My_GA_Agent"),
-        ProbabilisticAgent(treshold=0.19, name="Prob_AI19"),
->>>>>>> 74e50efa93b34d9c0d66af9a57ee4b9131b41d19
     ]
 
     game = Flip7Game(players, infinite_deck=True)
