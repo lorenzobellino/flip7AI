@@ -1,4 +1,10 @@
-from players import ProbabilisticAgent, RandomAgent, GAAgent, PointTresholdAgent, RLAgent
+from players import (
+    ProbabilisticAgent,
+    RandomAgent,
+    GAAgent,
+    PointTresholdAgent,
+    RLAgent,
+)
 from flip7.objects import Flip7Game
 import random
 import os
@@ -15,25 +21,38 @@ LOG_FREQ = 100
 def train():
     """Function to train RL agents."""
     from players import RLAgent, RandomAgent, ProbabilisticAgent
-    
+
+    # load existing policy if available
+    policy_file = "policies/rl_policy.pkl"
+    if os.path.exists(policy_file):
+        with open(policy_file, "rb") as f:
+            policy = pickle.load(f)
+        print(f"Loaded existing policy from {policy_file}")
+    else:
+        policy = None
+
     # Create RL agent
     rl_agent = RLAgent(name="RL_Agent", verbose=False)
     rl_agent.set_learning(True)
-    
+
+    if policy:
+        rl_agent.G = policy
+
     # Training phase
     print("Starting RL Training...")
-    opponents = [
-        RandomAgent(name="Random_Agent"),
-        ProbabilisticAgent(treshold=0.19, name="Prob_AI19")
-    
-    ]
+    # opponents = [
+    #     RandomAgent(name="Random_Agent"),
+    #     ProbabilisticAgent(treshold=0.19, name="Prob_AI19")
+
+    # ]
 
     # opponent = ProbabilisticAgent(treshold=0.19, name="Prob_AI19")
-    opponent = RandomAgent(name="Random_Agent")
-    
+    # opponent = RandomAgent(name="Random_Agent")
+    opponent = ProbabilisticAgent(treshold=0.19, name="Prob_AI19")
+
     best_win_rate = 0
     win_history = []
-    
+
     totalWin = 0
 
     game = Flip7Game([rl_agent, opponent], infinite_deck=True)
@@ -41,7 +60,7 @@ def train():
         # # Randomly select an opponent
         # opponent = random.choice(opponents)
         # opponent_copy = opponent.__class__(name=opponent.name)  # Fresh opponent instance
-        
+
         def on_round_end(round_game, _round_index):
             rounds = round_game.rounds.get(rl_agent, [])
             if not rounds:
@@ -57,7 +76,9 @@ def train():
             final_round = any(total >= 300 for total in projected_totals.values())
             winner = max(projected_totals, key=projected_totals.get)
             won_flag = (winner == rl_agent) if final_round else None
-            game_bonus = 1.0 if won_flag is True else (-1.0 if won_flag is False else 0.0)
+            game_bonus = (
+                1.0 if won_flag is True else (-1.0 if won_flag is False else 0.0)
+            )
 
             rl_agent.learn(
                 won_flag,
@@ -69,37 +90,39 @@ def train():
 
         # Run game
         game.run(on_round_end=on_round_end)
-        
+
         # Determine winner and reward
         winner = max(game.players, key=lambda p: p.total_score)
         won = winner == rl_agent
         if won:
             totalWin += 1
-        
+
         # Learning happens per round in on_round_end
-        
+
         # Logging
         if (episode + 1) % LOG_FREQ == 0:
             print(f"Episode {episode + 1}/{NUM_MATCHES}")
             print(f"Last match: {rl_agent.name} {'won' if won else 'lost'}")
             # print(f"RL Score: {rl_agent.total_score}, {opponent_copy} Score: {opponent_copy.total_score}")
-            print(f"RL Score: {rl_agent.total_score}, {opponent} Score: {opponent.total_score}")
-            win_rate = totalWin / ( LOG_FREQ)
+            print(
+                f"RL Score: {rl_agent.total_score}, {opponent} Score: {opponent.total_score}"
+            )
+            win_rate = totalWin / (LOG_FREQ)
             win_history.append(win_rate)
-            print(f"Win Rate: {win_rate*100:.2f}% over last {LOG_FREQ} episodes (W:{totalWin} L:{LOG_FREQ - totalWin})")
+            print(
+                f"Win Rate: {win_rate*100:.2f}% over last {LOG_FREQ} episodes (W:{totalWin} L:{LOG_FREQ - totalWin})"
+            )
             print("------------------------------")
             totalWin = 0
             if win_rate > best_win_rate:
                 best_win_rate = win_rate
 
-           
-        
         # Reset for next episode
         game.reset()
         rl_agent.reset()
-    
+
     print(f"Best Win Rate during training: {best_win_rate*100:.2f}%")
-    
+
     # Save policy
     if SAVE_POLICY:
         policy_file = "policies/rl_policy.pkl"
@@ -107,7 +130,7 @@ def train():
         with open(policy_file, "wb") as f:
             pickle.dump(rl_agent.get_policy(), f)
         print(f"Policy saved to {policy_file}")
-    
+
     print("Training complete!")
     return rl_agent
 

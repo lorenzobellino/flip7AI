@@ -14,7 +14,7 @@ LOG_FREQ = 1000
 class RLAgent(Player):
     """A reinforcement learning agent that learns to play Quarto."""
 
-    def __init__(self, name="RL_Agent", verbose = False) -> None:
+    def __init__(self, name="RL_Agent", verbose=False) -> None:
         super().__init__()
         self.name = name
         self.verbose = verbose
@@ -50,15 +50,16 @@ class RLAgent(Player):
     def encode_state(self, game) -> dict:
         """Encode the current game state into features for learning."""
         hand_sum = sum(card.value for card in self.hand if not card.is_bonus)
-        num_cards = len(self.hand)
+        num_cards = len([card.value for card in self.hand if not card.is_bonus])
+        # num_cards = len(self.hand)
         current_score = self.count_score()
-        
+
         state = {
             "hand_sum": hand_sum,
             "num_cards": num_cards,
             "current_score": current_score,
             "has_second_chance": self.second_chance,
-            "has_flip7": self.flip7,
+            # "has_flip7": self.flip7,
         }
         return state
 
@@ -66,7 +67,7 @@ class RLAgent(Player):
         """Decide whether to ask for another card using learned policy."""
         # Encode current state
         state = self.encode_state(game)
-        
+
         # Epsilon-greedy action selection
         if self.is_learning and random.random() < self.randomness:
             # Explore: random action
@@ -74,24 +75,26 @@ class RLAgent(Player):
         else:
             # Exploit: use learned policy
             state_key = str(state)
-            
+
             # Get Q-values for both actions
             q_ask = self.G.get((state_key, True), [0])
             q_stop = self.G.get((state_key, False), [0])
-            
+
             # Calculate average Q-values
             q_ask_val = np.mean(q_ask) if isinstance(q_ask, list) else q_ask
             q_stop_val = np.mean(q_stop) if isinstance(q_stop, list) else q_stop
-            
+
             # Choose action with highest Q-value
             action = q_ask_val >= q_stop_val
-        
+
         # Record state-action pair for learning
         self.episode_history.append((state, action))
-        
+
         if self.verbose:
-            print(f"{self.name} - State: {state} | Action: {'ask' if action else 'stop'}")
-        
+            print(
+                f"{self.name} - State: {state} | Action: {'ask' if action else 'stop'}"
+            )
+
         return action
 
     def compute_reward(
@@ -106,7 +109,9 @@ class RLAgent(Player):
         if won is None:
             win_component = 0.0
         else:
-            win_component = self.reward_weights["win"] if won else self.reward_weights["loss"]
+            win_component = (
+                self.reward_weights["win"] if won else self.reward_weights["loss"]
+            )
         hands_component = self.reward_weights["hands"] * max(0, hands_played)
         bust_component = self.reward_weights["bust"] * max(0, busted_count)
         score_component = 0.0
@@ -115,7 +120,13 @@ class RLAgent(Player):
 
         bonus_component = self.reward_weights["game_bonus"] * game_bonus
 
-        return win_component + hands_component + bust_component + score_component + bonus_component
+        return (
+            win_component
+            + hands_component
+            + bust_component
+            + score_component
+            + bonus_component
+        )
 
     def learn(
         self,
@@ -126,7 +137,9 @@ class RLAgent(Player):
         game_bonus: float = 0.0,
     ) -> None:
         """Updates the policy using shaped reward and Monte Carlo learning."""
-        reward = self.compute_reward(won, hands_played, busted_count, total_score, game_bonus)
+        reward = self.compute_reward(
+            won, hands_played, busted_count, total_score, game_bonus
+        )
 
         # Calculate discounted return (in reverse chronological order of states)
         G = reward
@@ -149,25 +162,18 @@ class RLAgent(Player):
 
         self.episode_history = []  # Reset for next episode
 
-    
-    def qlearn(self, won: bool, current_state, action, next_state, reward=None) -> None:
-        """Updates Q-values using Q-learning."""
-        if reward is None:
-            reward = 1 if won else -1
-        
-        state_action_key = (str(current_state), action)
-        
-        # Get max Q-value for next state
-        next_state_key = str(next_state)
-        max_next_q = max([self.G.get((next_state_key, a), 0) for a in [True, False]])
-        
-        # Q-learning update
-        old_q = self.G.get(state_action_key, 0)
-        new_q = old_q + self.learning_rate * (reward + 0.99 * max_next_q - old_q)
-        self.G[state_action_key] = new_q
+    # def qlearn(self, won: bool, current_state, action, next_state, reward=None) -> None:
+    #     """Updates Q-values using Q-learning."""
+    #     if reward is None:
+    #         reward = 1 if won else -1
 
+    #     state_action_key = (str(current_state), action)
 
+    #     # Get max Q-value for next state
+    #     next_state_key = str(next_state)
+    #     max_next_q = max([self.G.get((next_state_key, a), 0) for a in [True, False]])
 
-
-
-
+    #     # Q-learning update
+    #     old_q = self.G.get(state_action_key, 0)
+    #     new_q = old_q + self.learning_rate * (reward + 0.99 * max_next_q - old_q)
+    #     self.G[state_action_key] = new_q
